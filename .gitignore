@@ -1,0 +1,11 @@
+# Ignorar directorios específicos
+node_modules/
+.anima/
+.vscode/
+
+# Otros archivos o directorios que desees ignorar
+.env
+.env-sample
+uploads
+package.json
+package-lock.json
