@@ -5,7 +5,7 @@ const pool = require("../db");
 router.get("/get-games", async (req, res) => {
   try {
     console.log("Entrando a get games");
-    const [games] = await pool.execute(`SELECT * FROM games_details`);
+    const [games] = await pool.execute(`SELECT * FROM games_details gd where gd.active = 1`);
 
     if (games.length === 0) {
       return res
