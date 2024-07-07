@@ -18,7 +18,10 @@ app.use('/api/users', userRoutes);
 
 const gamesRoutes = require('./routes/games');
 app.use('/api/games', gamesRoutes);          
-                                            
+                
+app.get('/api/testing', (req, res) => {
+  res.status(200).json({ message: 'API is working correctly' });
+});
 // Configuración del puerto                 
 const PORT = process.env.PORT || 4000;      
 app.listen(PORT, () => {                    
