@@ -51,7 +51,7 @@ router.get("/get-scores/:user_id", async (req, res) => {
   const { user_id } = req.params;
 
   try {
-    const [rows] = await pool.query("SELECT * FROM scores WHERE user_id = ?", [
+    const [rows] = await pool.query("SELECT max(s.points) as maxPoints, s.* FROM scores s where s.user_id = ?", [
       user_id,
     ]);
 
