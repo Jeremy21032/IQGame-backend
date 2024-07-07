@@ -48,5 +48,38 @@ router.post('/score', async (req, res) => {
       res.status(500).json({ error: 'An error occurred while saving the score' });
     }
   });
+// Ruta para obtener los puntajes de un usuario específico
+router.get('/get-scores/:user_id', async (req, res) => {
+    const { user_id } = req.params;
+  
+    try {
+      const [rows] = await pool.query('SELECT * FROM scores WHERE user_id = ?', [user_id]);
+  
+      if (rows.length === 0) {
+        return res.status(404).json({ error: 'No scores found for the specified user' });
+      }
+  
+      res.status(200).json(rows);
+    } catch (error) {
+      console.error('Error retrieving scores:', error);
+      res.status(500).json({ error: 'An error occurred while retrieving the scores' });
+    }
+  });
+  
+  // Ruta para obtener los puntajes de todos los usuarios
+  router.get('/get-all-scores', async (req, res) => {
+    try {
+      const [rows] = await pool.query('SELECT * FROM scores');
+  
+      if (rows.length === 0) {
+        return res.status(404).json({ error: 'No scores found' });
+      }
+  
+      res.status(200).json(rows);
+    } catch (error) {
+      console.error('Error retrieving scores:', error);
+      res.status(500).json({ error: 'An error occurred while retrieving the scores' });
+    }
+  });
 
 module.exports = router;
