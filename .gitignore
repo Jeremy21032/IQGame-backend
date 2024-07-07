@@ -7,5 +7,5 @@ node_modules/
 .env
 .env-sample
 uploads
-package.json
+
 package-lock.json
