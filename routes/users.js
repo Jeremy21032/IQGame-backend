@@ -9,21 +9,17 @@ const multer = require('multer');
 const sendResetEmail = require('./resetPassword');
 
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadsDir = path.join(__dirname, 'uploads');
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir);
-    }
-    cb(null, uploadsDir);
+  destination: (req, file, cb) => {
+    const dest = '/tmp/uploads';
+    fs.mkdirSync(dest, { recursive: true });
+    cb(null, dest);
   },
-  filename: function (req, file, cb) {
+  filename: (req, file, cb) => {
     cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
-  },
+  }
 });
 
 const upload = multer({ storage: storage });
-
-
 
 // Ruta para registro de usuarios
 router.post('/register', async (req, res) => {
