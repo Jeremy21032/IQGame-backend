@@ -111,10 +111,8 @@ router.post("/login", async (req, res) => {
 // Ruta para actualizar el perfil del usuario
 router.post(
   '/update-profile',
-  upload.single('profileImage'),
   async (req, res) => {
-    const { name, lastname, user_id } = req.body;
-    const profileImage = req.file ? `/uploads/${req.file.filename}` : null;
+    const { name, lastname, user_id, profileImage } = req.body;
 
     if (!name || !lastname || !user_id) {
       return res.status(400).json({ message: 'Bad Request: Invalid payload' });
