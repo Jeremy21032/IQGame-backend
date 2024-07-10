@@ -7,6 +7,7 @@ const crypto = require("crypto");
 const fs = require("fs");
 const multer = require("multer");
 const sendResetEmail = require("./resetPassword");
+const cloudinary = require("../config/cloudinaryConfig");
 
 // Ruta para registro de usuarios
 router.post("/register", async (req, res) => {
@@ -35,16 +36,26 @@ router.post("/register", async (req, res) => {
         isAuthenticated: true,
       });
     } else {
-      res.status(400).json({ message: 'User not registered!', user: null, isAuthenticated: false });
+      res
+        .status(400)
+        .json({
+          message: "User not registered!",
+          user: null,
+          isAuthenticated: false,
+        });
     }
   } catch (error) {
     console.error("Error registering user:", error);
-    res.status(500).json({ message: "Error registering user", isAuthenticated: false });
+    res
+      .status(500)
+      .json({ message: "Error registering user", isAuthenticated: false });
   }
 });
 
 const loginUser = async (username, password) => {
-  const [users] = await pool.execute(`SELECT * FROM users WHERE username = ?`, [username]);
+  const [users] = await pool.execute(`SELECT * FROM users WHERE username = ?`, [
+    username,
+  ]);
   if (users.length === 0) {
     return { message: "Invalid username or password", isAuthenticated: false };
   }
@@ -83,25 +94,34 @@ router.post("/login", async (req, res) => {
 });
 
 // Ruta para actualizar el perfil del usuario
-router.post('/update-profile', async (req, res) => {
+router.post("/update-profile", async (req, res) => {
   const { name, lastname, user_id, profileImage } = req.body;
 
   if (!name || !lastname || !user_id) {
-    return res.status(400).json({ message: 'Bad Request: Invalid payload' });
+    return res.status(400).json({ message: "Bad Request: Invalid payload" });
   }
 
   try {
+    let imageUrl = profileImage;
+
+    if (profileImage) {
+      const uploadResponse = await cloudinary.uploader.upload(profileImage, {
+        folder: "profile_images",
+      });
+      imageUrl = uploadResponse.secure_url;
+    }
+
     await pool.execute(
-      'UPDATE users SET user_firstName=?, user_lastName=?, user_image=? WHERE user_id=?',
-      [name, lastname, profileImage, user_id]
+      "UPDATE users SET user_firstName=?, user_lastName=?, user_image=? WHERE user_id=?",
+      [name, lastname, imageUrl, user_id]
     );
     res.status(200).send({
-      message: 'Profile updated successfully',
-      profileImageUrl: profileImage,
+      message: "Profile updated successfully",
+      profileImageUrl: imageUrl,
     });
   } catch (error) {
-    console.error('Error updating profile:', error);
-    res.status(500).json({ message: 'Error updating profile' });
+    console.error("Error updating profile:", error);
+    res.status(500).json({ message: "Error updating profile" });
   }
 });
 
@@ -154,7 +174,9 @@ router.post("/request-reset", async (req, res) => {
     });
   } catch (error) {
     console.error("Reset Password Error:", error);
-    res.status(500).send({ isAuthenticated: false, message: "Error resetting password" });
+    res
+      .status(500)
+      .send({ isAuthenticated: false, message: "Error resetting password" });
   }
 });
 
