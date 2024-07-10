@@ -39,7 +39,7 @@ router.post('/register', async (req, res) => {
         console.log(result);  // Verificar qué está devolviendo realmente
     
         const [rows, fields] = result;
-        res.status(201).json({ message: 'User registered successfully!', userId: rows.insertId ,isAuthenticated:true});
+        res.status(201).json({ message: 'User registered successfully!', user: rows ,isAuthenticated:true});
     } catch (error) {
         console.error('Error registering user:', error);
         res.status(500).json({ message: 'Error registering user' ,isAuthenticated:false});
