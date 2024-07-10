@@ -110,31 +110,33 @@ router.post("/login", async (req, res) => {
 });
 // Ruta para actualizar el perfil del usuario
 router.post(
-  "/update-profile",
-  upload.single("profileImage"),
+  '/update-profile',
+  upload.single('profileImage'),
   async (req, res) => {
     const { name, lastname, user_id } = req.body;
     const profileImage = req.file ? `/uploads/${req.file.filename}` : null;
 
-    if (!name || !lastname || !user_id || !profileImage) {
-      return res.status(400).json({ message: "Bad Request: Invalid payload" });
+    if (!name || !lastname || !user_id) {
+      return res.status(400).json({ message: 'Bad Request: Invalid payload' });
     }
 
     try {
       await pool.execute(
-        `UPDATE users SET user_firstName=?, user_lastName=?, user_image=? WHERE user_id=?`,
+        'UPDATE users SET user_firstName=?, user_lastName=?, user_image=? WHERE user_id=?',
         [name, lastname, profileImage, user_id]
       );
       res.status(200).send({
-        message: "Profile updated successfully",
+        message: 'Profile updated successfully',
         profileImageUrl: profileImage,
       });
     } catch (error) {
-      console.error("Error updating profile:", error);
-      res.status(500).json({ message: "Error updating profile" });
+      console.error('Error updating profile:', error);
+      res.status(500).json({ message: 'Error updating profile' });
     }
   }
 );
+
+
 
 router.post("/reset-password/:token", async (req, res) => {
   const { token } = req.params;
