@@ -8,22 +8,6 @@ const fs = require("fs");
 const multer = require("multer");
 const sendResetEmail = require("./resetPassword");
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const dest = "/tmp/uploads";
-    fs.mkdirSync(dest, { recursive: true });
-    cb(null, dest);
-  },
-  filename: (req, file, cb) => {
-    cb(
-      null,
-      file.fieldname + "-" + Date.now() + path.extname(file.originalname)
-    );
-  },
-});
-
-const upload = multer({ storage: storage });
-
 // Ruta para registro de usuarios
 router.post("/register", async (req, res) => {
   const { username, email, password } = req.body;
@@ -42,51 +26,37 @@ router.post("/register", async (req, res) => {
       `INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)`,
       [username, email, hashedPassword]
     );
-    console.log(result); // Verificar qué está devolviendo realmente
 
-    const [rows, fields] = result;
-    let user;
-    if (rows.affectedRows > 0) {
-      user = await loginUser(username, password);
-      res
-        .status(201)
-        .json({
-          message: "User registered successfully!",
-          user: user,
-          isAuthenticated: true,
-        });
-    }else{
-      res.status(400).json({ message: 'User not registered!', user: null ,isAuthenticated:false});
+    if (result[0].affectedRows > 0) {
+      const user = await loginUser(username, password);
+      res.status(201).json({
+        message: "User registered successfully!",
+        user: user,
+        isAuthenticated: true,
+      });
+    } else {
+      res.status(400).json({ message: 'User not registered!', user: null, isAuthenticated: false });
     }
   } catch (error) {
     console.error("Error registering user:", error);
-    res
-      .status(500)
-      .json({ message: "Error registering user", isAuthenticated: false });
+    res.status(500).json({ message: "Error registering user", isAuthenticated: false });
   }
 });
+
 const loginUser = async (username, password) => {
-  const [users] = await pool.execute(`SELECT * FROM users WHERE username = ?`, [
-    username,
-  ]);
-  console.log(users);
+  const [users] = await pool.execute(`SELECT * FROM users WHERE username = ?`, [username]);
   if (users.length === 0) {
-    return res.status(401).json({
-      message: "Invalid username or password",
-      isAuthenticated: false,
-    });
+    return { message: "Invalid username or password", isAuthenticated: false };
   }
 
   const user = users[0];
   const isValid = await bcrypt.compare(password, user.password_hash);
   if (!isValid) {
-    return res.status(401).json({
-      message: "Invalid username or password",
-      isAuthenticated: false,
-    });
+    return { message: "Invalid username or password", isAuthenticated: false };
   }
   return user;
 };
+
 // Ruta para inicio de sesión de usuarios
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
@@ -98,6 +68,9 @@ router.post("/login", async (req, res) => {
   }
   try {
     const user = await loginUser(username, password);
+    if (user.isAuthenticated === false) {
+      return res.status(401).json(user);
+    }
     res.json({
       message: "Login successful",
       user: user,
@@ -108,34 +81,31 @@ router.post("/login", async (req, res) => {
     res.status(500).json({ message: "Error logging in" });
   }
 });
+
 // Ruta para actualizar el perfil del usuario
-router.post(
-  '/update-profile',
-  async (req, res) => {
-    const { name, lastname, user_id, profileImage } = req.body;
+router.post('/update-profile', async (req, res) => {
+  const { name, lastname, user_id, profileImage } = req.body;
 
-    if (!name || !lastname || !user_id) {
-      return res.status(400).json({ message: 'Bad Request: Invalid payload' });
-    }
-
-    try {
-      await pool.execute(
-        'UPDATE users SET user_firstName=?, user_lastName=?, user_image=? WHERE user_id=?',
-        [name, lastname, profileImage, user_id]
-      );
-      res.status(200).send({
-        message: 'Profile updated successfully',
-        profileImageUrl: profileImage,
-      });
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      res.status(500).json({ message: 'Error updating profile' });
-    }
+  if (!name || !lastname || !user_id) {
+    return res.status(400).json({ message: 'Bad Request: Invalid payload' });
   }
-);
 
+  try {
+    await pool.execute(
+      'UPDATE users SET user_firstName=?, user_lastName=?, user_image=? WHERE user_id=?',
+      [name, lastname, profileImage, user_id]
+    );
+    res.status(200).send({
+      message: 'Profile updated successfully',
+      profileImageUrl: profileImage,
+    });
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({ message: 'Error updating profile' });
+  }
+});
 
-
+// Ruta para restablecer la contraseña
 router.post("/reset-password/:token", async (req, res) => {
   const { token } = req.params;
   const { password } = req.body;
@@ -165,19 +135,17 @@ router.post("/reset-password/:token", async (req, res) => {
   }
 });
 
+// Ruta para solicitar el restablecimiento de la contraseña
 router.post("/request-reset", async (req, res) => {
-  console.log("Request :", req.body);
   const { email } = req.body;
   const token = crypto.randomBytes(20).toString("hex");
 
   try {
-    // Almacenar token en la base de datos junto con el email del usuario y una fecha de expiración
     await pool.execute(
       `UPDATE users SET resetPasswordToken=?, resetPasswordExpires=DATE_ADD(NOW(), INTERVAL 15 MINUTE) WHERE email=?`,
       [token, email]
     );
 
-    // Enviar email
     await sendResetEmail(email, token);
 
     res.status(200).send({
@@ -186,9 +154,8 @@ router.post("/request-reset", async (req, res) => {
     });
   } catch (error) {
     console.error("Reset Password Error:", error);
-    res
-      .status(500)
-      .send({ isAuthenticated: false, message: "Error resetting password" });
+    res.status(500).send({ isAuthenticated: false, message: "Error resetting password" });
   }
 });
+
 module.exports = router;
