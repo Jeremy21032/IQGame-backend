@@ -5,7 +5,9 @@ const pool = require("../db");
 router.get("/get-games", async (req, res) => {
   try {
     console.log("Entrando a get games");
-    const [games] = await pool.execute(`SELECT * FROM games_details gd where gd.active = 1`);
+    const [games] = await pool.execute(
+      `SELECT * FROM games_details gd where gd.active = 1`
+    );
 
     if (games.length === 0) {
       return res
@@ -51,9 +53,10 @@ router.get("/get-scores/:user_id", async (req, res) => {
   const { user_id } = req.params;
 
   try {
-    const [rows] = await pool.query("SELECT max(s.points) as maxPoints, s.* FROM scores s where s.user_id = ?", [
-      user_id,
-    ]);
+    const [rows] = await pool.query(
+      "SELECT max(s.points) as maxPoints, s.* FROM scores s where s.user_id = ?",
+      [user_id]
+    );
 
     if (rows.length === 0) {
       return res
@@ -96,4 +99,33 @@ router.get("/get-all-scores", async (req, res) => {
   }
 });
 
+router.post("/saveprogress", async (req, res) => {
+  const { user_id, level, completed } = req.body;
+
+  try {
+    const newProgress = await pool.query(
+      "INSERT INTO game_progress (user_id, level, completed) VALUES ($1, $2, $3) RETURNING *",
+      [user_id, level, completed]
+    );
+    res.json(newProgress.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+});
+
+router.get("/getprogress/:user_id", async (req, res) => {
+  const { user_id } = req.params;
+
+  try {
+    const progress = await pool.query(
+      "SELECT * FROM game_progress WHERE user_id = $1",
+      [user_id]
+    );
+    res.json(progress.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+});
 module.exports = router;
