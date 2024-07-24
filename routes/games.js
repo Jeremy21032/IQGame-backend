@@ -104,7 +104,7 @@ router.post("/saveprogress", async (req, res) => {
 
   try {
     const newProgress = await pool.query(
-      "INSERT INTO game_progress (user_id, level, completed) VALUES ($1, $2, $3) RETURNING *",
+      "INSERT INTO game_progress (user_id, level, completed) VALUES (?, ?, ?) RETURNING *",
       [user_id, level, completed]
     );
     res.json(newProgress.rows[0]);
