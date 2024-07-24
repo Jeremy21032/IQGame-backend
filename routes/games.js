@@ -103,11 +103,11 @@ router.post("/saveprogress", async (req, res) => {
   const { user_id, level, completed } = req.body;
 
   try {
-    const newProgress = await pool.query(
-      "INSERT INTO game_progress (user_id, level, completed) VALUES (?, ?, ?) RETURNING *",
+    const [result] = await pool.query(
+      "INSERT INTO game_progress (user_id, level, completed) VALUES (?, ?, ?)",
       [user_id, level, completed]
     );
-    res.json(newProgress.rows[0]);
+    res.status(201).json(result);
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server error");
