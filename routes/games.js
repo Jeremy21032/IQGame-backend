@@ -107,7 +107,7 @@ router.post("/saveprogress", async (req, res) => {
       "INSERT INTO game_progress (user_id, level, completed) VALUES (?, ?, ?)",
       [user_id, level, completed]
     );
-    res.status(201).json(result);
+    res.status(201).send("ok");
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server error");
