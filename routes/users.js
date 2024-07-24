@@ -158,7 +158,7 @@ router.post("/reset-password/:token", async (req, res) => {
 // Ruta para solicitar el restablecimiento de la contraseña
 router.post("/request-reset", async (req, res) => {
   const { email } = req.body;
-  const token = crypto.randomBytes(20).toString("hex");
+  const token = crypto.randomBytes(5).toString("hex");
 
   try {
     await pool.execute(
